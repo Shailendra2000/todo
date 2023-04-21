@@ -1,11 +1,27 @@
 'use client'
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { CreateTaskMutation } from "../../mutations/task-mutations/CreateMutation";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { fetchStatusList } from "@/services/fetchStatusList";
     
-const CreateTask = () => { 
-    const status = ['pending','urgent','completed']
+interface ICreateTaskProps{
+    buttonDisabled:boolean
+}
+const CreateTask = (props:ICreateTaskProps) => { 
+    const [status,setStatus] = useState([]) as any
+    const result = useQuery(["tasks",localStorage.getItem("todo_token")],fetchStatusList)
     const createTaskMutation = useMutation(CreateTaskMutation) 
-
+    const router = useRouter()
+    useEffect(()=>{
+        if(result.data){
+            const statusList:string[] = []
+            result.data.forEach((element:any) => {
+                statusList.push(element.status)
+            });
+            setStatus(statusList)
+        }
+    },[result.data])
     return (
         <form
         className="flex gap-5 items-center justify-center rounded-lg bg-gray-200 px-10 py-5 shadow-lg"
@@ -21,6 +37,7 @@ const CreateTask = () => {
           createTaskMutation.mutate(obj, {
             onSuccess: (data) => {
               alert('task created!')
+              router.refresh()
             },
             onError: (error) => {
                 alert("Bad Request")
@@ -54,12 +71,12 @@ const CreateTask = () => {
         <label htmlFor="status">
           Status
           <select className='search-input' name="status">
-          {status.map((status) => (
+          {status.map((status:string) => (
               <option key={status}>{status}</option>
             ))}
           </select>
         </label> 
-        <button className="px-6 rounded border-none bg-sky-500 py-2 text-white hover:opacity-50">
+        <button disabled={props.buttonDisabled} className="px-6 disabled:bg-gray-300 rounded border-none bg-sky-500 py-2 text-white hover:opacity-50">
           CREATE
         </button>
       </form>

@@ -25,7 +25,7 @@ const Login = () => {
                 router.push('/tasks')
               }
               else{
-                router.push('/admin')
+                router.push('/admin/users')
               }
             },
             onError: (error) => {

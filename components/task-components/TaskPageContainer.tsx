@@ -8,9 +8,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import TaskContainer from '../../components/task-components/TaskContainer';
 import { UpdateTaskStatusMutation } from '../../mutations/task-mutations/UpdateMutation';
 import {  useRouter } from 'next/navigation';
+import AdminTaskPageHeader from './AdminHeader';
 const TaskPageContainer = () => {
   let searchParams = new URLSearchParams(window.location.search);
-  
   let fetchParam:IGetTaskRequestParams={token:localStorage.getItem("todo_token") as string,userId:Number(searchParams.get('userId'))};
   const result = useQuery(["tasks",fetchParam],fetchTasks)
   const [tasks,setTasks] = useState([]) as any
@@ -55,9 +55,10 @@ const TaskPageContainer = () => {
 
   return (
     <DragDropContext onDragEnd={dropEnd}>
+    <AdminTaskPageHeader name={searchParams.get('name')}/>
     <div className='flex flex-col items-center p-6 gap-5'>  
       <div className='shadow-md'>
-        <CreateTask key='create_form'/>
+        <CreateTask key='create_form' buttonDisabled={Boolean(localStorage.getItem('isAdmin'))}/>
       </div>
       <div className='grid grid-flow-col-dense gap-4'>
       {

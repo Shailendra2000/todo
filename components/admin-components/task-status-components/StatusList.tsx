@@ -13,7 +13,7 @@ function StatusList (props:IStatusListProps) {
                 (provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps} className="flex flex-col justify-center m-auto shadow-md gap-4  p-6 items-center mt-8 mx-2">
                         <div key='heading' className="flex justify-between w-full p-4 shadow-md ">
-                            <h1>Status</h1>
+                            <h1>Status List</h1>
                         </div>  
                         {   
                         props.statusList.map((status:any,index:number)=>(

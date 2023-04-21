@@ -1,6 +1,6 @@
-export const UpdateTaskStatusMutation =  (formData:any) =>
+export const DeleteTaskStatusMutation =  (formData:any) =>
 fetch('http://localhost:9000/task-status', {
-  method: 'PUT',
+  method: 'DELETE',
   headers: {'Content-Type': 'application/json','authorization':localStorage.getItem("todo_token") as any},
   body: JSON.stringify(formData),
 }).then((response) => {

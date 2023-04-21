@@ -1,7 +1,5 @@
 'use client'
-import { useMutation } from "@tanstack/react-query"
-import { Draggable, Droppable } from "react-beautiful-dnd"
-import { DeleteTaskMutation } from "../../mutations/task-mutations/DeleteMutaion"
+import {  Droppable } from "react-beautiful-dnd"
 import TaskItem from "./TaskItem"
 
 interface IStatusContainerProps {
@@ -11,7 +9,7 @@ interface IStatusContainerProps {
 
 const TaskContainer = (props:IStatusContainerProps) => {
     return (
-        <Droppable droppableId={props.id}>
+        <Droppable isDropDisabled={Boolean(localStorage.getItem('isAdmin'))} droppableId={props.id}>
         {
           (provided)=>(
             <div ref={provided.innerRef} {...provided.droppableProps} className="bg-slate-100 flex py-3 px-4 gap-3 flex-col items-center font-sans">

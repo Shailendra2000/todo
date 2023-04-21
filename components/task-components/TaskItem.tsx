@@ -2,6 +2,7 @@
 
 import { DeleteTaskMutation } from "@/mutations/task-mutations/DeleteMutaion"
 import { useMutation } from "@tanstack/react-query"
+import { useRouter } from "next/navigation"
 import { Draggable } from "react-beautiful-dnd"
 
 interface ITaskItemProps{
@@ -12,11 +13,12 @@ interface ITaskItemProps{
 function TaskItem (props:ITaskItemProps) {
 
     const deleteTaskMutation = useMutation(DeleteTaskMutation) 
-
+    const router = useRouter()
     const deleteTask = (id:string|number) => {
       deleteTaskMutation.mutate({"id":Number(id)}, {
         onSuccess: (data) => {
           alert('task deleted!')
+          router.refresh()
         },
         onError: (error) => {
             alert("Bad Request")
@@ -24,7 +26,7 @@ function TaskItem (props:ITaskItemProps) {
       })
     }
     return(
-        <Draggable draggableId={props.id.toString()} index={props.index} key={props.id}>
+        <Draggable isDragDisabled={Boolean(localStorage.getItem('isAdmin'))} draggableId={props.id.toString()} index={props.index} key={props.id}>
         {
         (provided) => (
             <div ref={provided.innerRef} {...provided.dragHandleProps} {...provided.draggableProps} key={props.id} className="shadow-md px-6 py-3 w-56 flex flex-col gap-6 bg-white ">
