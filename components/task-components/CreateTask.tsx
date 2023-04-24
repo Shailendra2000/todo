@@ -2,7 +2,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CreateTaskMutation } from "../../mutations/task-mutations/CreateMutation";
 import { useRouter } from "next/navigation";
-import { useTaskStatusList } from "@/hooks/task-hooks/useTaskStatusList";
+import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList";
 import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
     
 interface ICreateTaskProps{

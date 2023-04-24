@@ -2,7 +2,7 @@
 import {  Droppable } from "react-beautiful-dnd"
 import TaskItem from "./TaskItem"
 import { IStatusContainerProps } from "@/interfaces/task-interfaces/tastContainerProps.interface"
-import { useUserTasks } from "@/hooks/task-hooks/UserTasks"
+import { useUserTasks } from "@/hooks/task-hooks/useUserTasks"
 
 
 const TaskContainer = (props:IStatusContainerProps) => {

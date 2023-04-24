@@ -2,22 +2,20 @@
 import { useEffect, useState, useCallback } from 'react';
 import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 import CreateTask from '../../components/task-components/CreateTask';
-import {  useQuery, useQueryClient } from '@tanstack/react-query';
+import {  useQuery } from '@tanstack/react-query';
 import TaskContainer from '../../components/task-components/TaskContainer';
 import {  useRouter } from 'next/navigation';
 import AdminTaskPageHeader from './AdminHeader';
 import { fetchStatusList } from '../../services/fetchStatusList';
-import { useTask } from '@/hooks/task-hooks/useTasks';
-import { useUserTasks } from '@/hooks/task-hooks/UserTasks';
+import { useUserTasks } from '@/hooks/task-hooks/useUserTasks';
 import { ITaskStatus } from '@/interfaces/task-interfaces/taskStatus.interface';
 
 
 const TaskPageContainer = () => {
   let searchParams = new URLSearchParams(window.location.search);
   const {isError,data} = useQuery(['statusList',localStorage.getItem("todo_token") as string],fetchStatusList)
-  const {userTasks,setUserTasks,fetchUserTasks} = useUserTasks()
   const [taskStatusList, setTaskStatusList] = useState<ITaskStatus[]>([]);
-  const { updateTaskStatus} = useTask()
+  const {userTasks,setUserTasks,fetchUserTasks,updateTaskStatus} = useUserTasks({"statusList":taskStatusList})
   const router = useRouter()
 
   useEffect(() => {
@@ -25,19 +23,9 @@ const TaskPageContainer = () => {
       router.push('/auth/login')
     }
     if (data) {
-        console.log("task list")
         setTaskStatusList([...data]);
     }
-  },[data,isError]);
-
-  useEffect(()=>{
-    console.log("tasks")
-    setUserTasks({})
-    taskStatusList.forEach(async(status:ITaskStatus) => {
-        await fetchUserTasks(status)
-    })
-  },[taskStatusList])
-  
+  },[data,isError]);  
   
   const dropEnd = (result:DropResult)=>{
     const { source, destination } = result

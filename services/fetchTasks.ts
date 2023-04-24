@@ -2,11 +2,11 @@ export interface IGetTaskRequestParams{
     token:string,
     userId:number|null|undefined,
     statusId:number,
-    page:number
+    page:number,
+    limit:number
   }
-  const limit=2
     export const fetchTasks = async (queryKey:IGetTaskRequestParams) => {
-      let url = `http://localhost:9000/task?statusId=${queryKey.statusId}&page=${queryKey.page}&limit=${limit}`
+      let url = `http://localhost:9000/task?statusId=${queryKey.statusId}&page=${queryKey.page}&limit=${queryKey.limit}`
       if(queryKey.userId){
         url+=`&userId=${queryKey.userId}`
       }

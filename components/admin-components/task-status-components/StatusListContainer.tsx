@@ -1,19 +1,16 @@
 'use client'
 
-import { useEffect } from "react"
 import StatusList from "./StatusList"
-import { useQuery } from "@tanstack/react-query"
-import { fetchStatusList } from "@/services/fetchStatusList"
-import { useRouter } from "next/navigation"
 import { DragDropContext, DropResult } from "react-beautiful-dnd"
 import CreateStatus from "./CreateStatus"
-import { useTaskStatusList } from "@/hooks/task-hooks/useTaskStatusList"
+import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList"
+import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface"
 
 
 function StatusListContainer () {
 
     const {statusList,updateTaskPriority} = useTaskStatusList()
-    
+
     const dropEnd = (result:DropResult)=>{
         const { source, destination } = result
         if (!destination) return
@@ -32,7 +29,6 @@ function StatusListContainer () {
 
     return (
     <div className="flex flex-col items-center mt-5">
-      <CreateStatus/>
       <DragDropContext onDragEnd={dropEnd}>
           <StatusList statusList={statusList}/>
       </DragDropContext>

@@ -19,7 +19,7 @@ const Signup = () => {
             signupMutation.mutate(obj, {
                 onSuccess: (data) => {
                     alert("Account created!, please login")
-                    router.push('/login')
+                    router.push('auth/login')
                 },
                 onError: (error) => {
                     alert("Invalid Inputs")

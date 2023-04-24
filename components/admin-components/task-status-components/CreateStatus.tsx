@@ -1,26 +1,33 @@
 'use client'
+import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
 import { CreateTaskMutation } from "@/mutations/task-mutations/CreateMutation";
 import { CreateTaskStatusMutation } from "@/mutations/task-status-mutations/createStatus";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
     
-const CreateStatus = () => { 
+interface ICreateStatusProps{
+    statusList:ITaskStatus[]
+}
+const CreateStatus = (props:ICreateStatusProps) => { 
+    
     const createTaskStatusMutation = useMutation(CreateTaskStatusMutation) 
     const router = useRouter()
     return (
         <form
         className="flex gap-5 items-center justify-center rounded-lg bg-gray-200 px-10 py-5 shadow-lg"
+        id="create"
         onSubmit={(e) => {
           e.preventDefault();
           const formData = new FormData(e.currentTarget);
           const obj = {
             "title": formData.get("title") ?? "",
           };
-          
           createTaskStatusMutation.mutate(obj, {
             onSuccess: (data) => {
               alert('status created!')
+              props.statusList.push(data.createdStatus)
               router.refresh()
+              
             },
             onError: (error) => {
                 alert("Bad Request")

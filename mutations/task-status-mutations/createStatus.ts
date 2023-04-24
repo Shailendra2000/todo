@@ -5,6 +5,7 @@ fetch('http://localhost:9000/task-status', {
   body: JSON.stringify(formData),
 }).then((response) => {
     if (response.ok){
+        return response.json()
     }
     else{
         throw new Error()
