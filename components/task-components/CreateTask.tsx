@@ -2,26 +2,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { CreateTaskMutation } from "../../mutations/task-mutations/CreateMutation";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { fetchStatusList } from "@/services/fetchStatusList";
+import { useTaskStatusList } from "@/hooks/task-hooks/useTaskStatusList";
+import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
     
 interface ICreateTaskProps{
     buttonDisabled:boolean
 }
 const CreateTask = (props:ICreateTaskProps) => { 
-    const [status,setStatus] = useState([]) as any
-    const result = useQuery(["tasks",localStorage.getItem("todo_token")],fetchStatusList)
+    const {statusList} = useTaskStatusList()
     const createTaskMutation = useMutation(CreateTaskMutation) 
     const router = useRouter()
-    useEffect(()=>{
-        if(result.data){
-            const statusList:string[] = []
-            result.data.forEach((element:any) => {
-                statusList.push(element.status)
-            });
-            setStatus(statusList)
-        }
-    },[result.data])
+
     return (
         <form
         className="flex gap-5 items-center justify-center rounded-lg bg-gray-200 px-10 py-5 shadow-lg"
@@ -33,7 +24,6 @@ const CreateTask = (props:ICreateTaskProps) => {
             "desc": formData.get("desc") ?? "",
             "status": formData.get("status") ?? ""
           };
-          
           createTaskMutation.mutate(obj, {
             onSuccess: (data) => {
               alert('task created!')
@@ -71,8 +61,8 @@ const CreateTask = (props:ICreateTaskProps) => {
         <label htmlFor="status">
           Status
           <select className='search-input' name="status">
-          {status.map((status:string) => (
-              <option key={status}>{status}</option>
+          {statusList.map((status:ITaskStatus) => (
+              <option value={status.id} key={status.status}>{status.status}</option>
             ))}
           </select>
         </label> 

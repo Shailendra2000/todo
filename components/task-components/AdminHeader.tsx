@@ -5,7 +5,7 @@ interface IAdminTaskPageHeaderProps{
     name:string|null
 }
 function AdminTaskPageHeader(props:IAdminTaskPageHeaderProps){
-    const isAdmin = localStorage.getItem("isAdmin")
+    let isAdmin =(localStorage.getItem("isAdmin")==='true')
     const router = useRouter()
     return (
         <>

@@ -1,70 +1,80 @@
 'use client'
-/* eslint-disable react-hooks/exhaustive-deps */
-import { useEffect, useState } from 'react';
-import { IGetTaskRequestParams, fetchTasks } from "../../services/fetchTasks";
+import { useEffect, useState, useCallback } from 'react';
 import { DragDropContext, DropResult } from 'react-beautiful-dnd'
 import CreateTask from '../../components/task-components/CreateTask';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {  useQuery, useQueryClient } from '@tanstack/react-query';
 import TaskContainer from '../../components/task-components/TaskContainer';
-import { UpdateTaskStatusMutation } from '../../mutations/task-mutations/UpdateMutation';
 import {  useRouter } from 'next/navigation';
 import AdminTaskPageHeader from './AdminHeader';
+import { fetchStatusList } from '../../services/fetchStatusList';
+import { useTask } from '@/hooks/task-hooks/useTasks';
+import { useUserTasks } from '@/hooks/task-hooks/UserTasks';
+import { ITaskStatus } from '@/interfaces/task-interfaces/taskStatus.interface';
+
+
 const TaskPageContainer = () => {
   let searchParams = new URLSearchParams(window.location.search);
-  let fetchParam:IGetTaskRequestParams={token:localStorage.getItem("todo_token") as string,userId:Number(searchParams.get('userId'))};
-  const result = useQuery(["tasks",fetchParam],fetchTasks)
-  const [tasks,setTasks] = useState([]) as any
-  const [taskStatusList, setTaskStatusList] = useState([]) as any
-  const updateTaskStatusMutation = useMutation(UpdateTaskStatusMutation)
+  const {isError,data} = useQuery(['statusList',localStorage.getItem("todo_token") as string],fetchStatusList)
+  const {userTasks,setUserTasks,fetchUserTasks} = useUserTasks()
+  const [taskStatusList, setTaskStatusList] = useState<ITaskStatus[]>([]);
+  const { updateTaskStatus} = useTask()
   const router = useRouter()
 
-  const updateTaskStatus = (obj:any) => {
-    console.log(obj)
-    updateTaskStatusMutation.mutate(obj, {
-      onSuccess: (data) => {
-      },
-      onError: (error) => {
-          alert("Bad Request")
-      },
-    });
-  }
-
   useEffect(() => {
-    if (result.isError) {
+    if (isError) {
       router.push('/auth/login')
     }
-    if (result.data) {
-      setTaskStatusList(Object.keys(result.data.tasks));
-      setTasks(result.data.tasks)
+    if (data) {
+        console.log("task list")
+        setTaskStatusList([...data]);
     }
-  },[result.data,result.isError]);
+  },[data,isError]);
+
+  useEffect(()=>{
+    console.log("tasks")
+    setUserTasks({})
+    taskStatusList.forEach(async(status:ITaskStatus) => {
+        await fetchUserTasks(status)
+    })
+  },[taskStatusList])
   
   
   const dropEnd = (result:DropResult)=>{
     const { source, destination } = result
     if (!destination) return
     if (destination.droppableId===source.droppableId && destination.index===source.index) return
-
-    let add=tasks[source.droppableId][source.index]
-    tasks[source.droppableId].splice(source.index,1)
-    tasks[destination.droppableId].splice(destination.index,0,add)
+    
+    let add=userTasks[source.droppableId][0][source.index]
+    userTasks[source.droppableId][0].splice(source.index,1)
+    userTasks[destination.droppableId][0].splice(destination.index,0,add)
     if(destination.droppableId!==source.droppableId ){
         updateTaskStatus({"taskId":result.draggableId,"status":result.destination?.droppableId})
     }
+     
   }
-
+ 
   return (
     <DragDropContext onDragEnd={dropEnd}>
     <AdminTaskPageHeader name={searchParams.get('name')}/>
     <div className='flex flex-col items-center p-6 gap-5'>  
       <div className='shadow-md'>
-        <CreateTask key='create_form' buttonDisabled={Boolean(localStorage.getItem('isAdmin'))}/>
+        <CreateTask key='create_form' buttonDisabled={localStorage.getItem('isAdmin')!=='false'}/>
       </div>
       <div className='grid grid-flow-col-dense gap-4'>
       {
-        taskStatusList.map((element:string) => (
-            <TaskContainer tasks={tasks[element]} id={element} key={element}/>
-        ))
+        
+        taskStatusList.map((element:ITaskStatus) => {
+           return <div className='flex flex-col items-center bg-slate-100 py-5'>
+                <TaskContainer tasks={userTasks[element.status]?userTasks[element.status][0]:[]} status={element.status} id={element.id} key={element.id}/>
+                {
+                    userTasks[element.status] && userTasks[element.status][2] > userTasks[element.status][1]*2 && 
+                    <button onClick={() => {
+                        let taskStatus:ITaskStatus={id:element.id,status:element.status};
+                        fetchUserTasks(taskStatus,userTasks[element.status][1]+1)
+                        }} className="px-3 rounded border-none bg-gray-400 disabled:bg-gray-300 py-2 text-white hover:opacity-50">Show more</button>        
+                }
+                </div>
+        })
       }
     </div>
     </div>

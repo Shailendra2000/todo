@@ -1,5 +1,6 @@
 'use client'
 
+import { useTaskStatusList } from "@/hooks/task-hooks/useTaskStatusList";
 import { DeleteTaskMutation } from "@/mutations/task-mutations/DeleteMutaion";
 import { DeleteTaskStatusMutation } from "@/mutations/task-status-mutations/removeStatus";
 import { useMutation } from "@tanstack/react-query";
@@ -12,20 +13,9 @@ interface IStatusItemProps {
     title:string
 }
 function StatusItem (props:IStatusItemProps) {
-    const deleteStatusMutation = useMutation(DeleteTaskStatusMutation)
+    const { deleteStatus } = useTaskStatusList()
     const router = useRouter()
-    function deleteStatus (statusId : number) {
-        let obj = { "statusId" : statusId }
-        deleteStatusMutation.mutate(obj, {
-            onSuccess: (data) => {
-              alert('status deleted!')
-              router.refresh()
-            },
-            onError: (error) => {
-                alert("Bad Request")
-            },
-        });
-    }
+
     return (
         <Draggable draggableId={props.id.toString()} index={props.index} key={props.id}>
         {

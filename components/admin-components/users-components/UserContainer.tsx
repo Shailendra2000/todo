@@ -15,7 +15,6 @@ const AdminPageContainer = () => {
         if (result.data) {
           setUserList(result.data.users);
         }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
       },[result.data,result.isError]);
     return (
         <div className="flex flex-col items-center gap-4">

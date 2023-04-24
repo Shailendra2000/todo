@@ -26,7 +26,7 @@ function TaskItem (props:ITaskItemProps) {
       })
     }
     return(
-        <Draggable isDragDisabled={Boolean(localStorage.getItem('isAdmin'))} draggableId={props.id.toString()} index={props.index} key={props.id}>
+        <Draggable isDragDisabled={localStorage.getItem('isAdmin')==='true'} draggableId={props.id.toString()} index={props.index} key={props.id}>
         {
         (provided) => (
             <div ref={provided.innerRef} {...provided.dragHandleProps} {...provided.draggableProps} key={props.id} className="shadow-md px-6 py-3 w-56 flex flex-col gap-6 bg-white ">

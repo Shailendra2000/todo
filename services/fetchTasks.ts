@@ -1,15 +1,18 @@
 export interface IGetTaskRequestParams{
     token:string,
-    userId:number|null|undefined
+    userId:number|null|undefined,
+    statusId:number,
+    page:number
   }
-    export const fetchTasks = async ({queryKey}:any) => {
-      let url = `http://localhost:9000/task`
-      if(queryKey[1].userId){
-        url+=`?userId=${queryKey[1].userId}`
+  const limit=2
+    export const fetchTasks = async (queryKey:IGetTaskRequestParams) => {
+      let url = `http://localhost:9000/task?statusId=${queryKey.statusId}&page=${queryKey.page}&limit=${limit}`
+      if(queryKey.userId){
+        url+=`&userId=${queryKey.userId}`
       }
       const res = await fetch(
         url,{
-          headers:{ "authorization":queryKey[1].token}
+          headers:{ "authorization":queryKey.token}
         }
       );
       if (!res.ok) {
