@@ -8,6 +8,7 @@ const AdminPageContainer = () => {
     const result = useQuery(["tasks",localStorage.getItem("todo_token")],fetchUserList)
     const router = useRouter()
     const [userList,setUserList] = useState([]) 
+
     useEffect(() => {
         if (result.isError) {
           router.push('/tasks')
@@ -16,6 +17,7 @@ const AdminPageContainer = () => {
           setUserList(result.data.users);
         }
       },[result.data,result.isError]);
+      
     return (
         <div className="flex flex-col items-center gap-4">
           <UserList users={userList} />

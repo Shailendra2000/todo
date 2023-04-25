@@ -23,7 +23,7 @@ export const useTaskStatusList = () => {
         }
     },[result.data,result.isError]);
 
-    const updateTaskPriority = (statusId:number,priority:number) => {
+    const updateTaskStatusPriority = (statusId:number,priority:number) => {
         const obj = {
             "statusId": statusId,
             "priority": priority
@@ -48,5 +48,5 @@ export const useTaskStatusList = () => {
         });
     }
 
-    return {statusList,updateTaskPriority,deleteStatus}
+    return {statusList,updateTaskStatusPriority,deleteStatus}
 }

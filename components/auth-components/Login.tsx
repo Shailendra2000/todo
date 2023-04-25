@@ -2,36 +2,46 @@
 import {  useMutation } from "@tanstack/react-query";
 import { LoginMutation } from "../../mutations/auth-mutations/LoginMutation";
 import { useRouter } from "next/navigation";
-
+import { FormEvent } from "react";
+import { getFormData } from "@/services/getFormData";
+import { ILoginResponseData } from "@/interfaces/login-interfaces/loginResponse.interface";
 
 const Login = () => {
+  
   const loginMutation = useMutation(LoginMutation);
   const router = useRouter();
+  const defaultLoginFormFeilds = ['email', 'password']
+  const defaultAdminRedirectUrl = '/users'
+  const defaultUserRedirectUrl = '/tasks'
+  const defaultErrorMessage = 'Invalid Creds!' 
+  const defaultTokenKey = 'todo_token' 
+  const defaultIsAdminKey = 'isAdmin'
+
+  const loginAction = ( formSubmitEvent : FormEvent<HTMLFormElement> , dataFeilds : string[] = defaultLoginFormFeilds, adminRedirectUrl : string = defaultAdminRedirectUrl, userRedirectUrl : string = defaultUserRedirectUrl, errorMessage : string = defaultErrorMessage, tokenKey : string = defaultTokenKey, isAdminKey : string = defaultIsAdminKey)=>{
+    const loginData = getFormData( formSubmitEvent.currentTarget, dataFeilds ) 
+    loginMutation.mutate(loginData, {
+      onSuccess: ( data : ILoginResponseData ) => {
+        localStorage.setItem(`${tokenKey}`, data.token)
+        localStorage.setItem(`${isAdminKey}`, String( data.isAdmin ))
+        if ( data.isAdmin !== true ) {
+          router.push(`${userRedirectUrl}`)
+        }
+        else{
+          router.push(`${adminRedirectUrl}`)
+        }
+      },
+      onError: (error) => {
+        alert(`${errorMessage}`)
+      },
+    });
+  }
+
   return (
     <form
         className="mb-10 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-10 shadow-lg"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          const obj = {
-            email: formData.get("email") ?? "",
-            password: formData.get("password") ?? "",
-          };
-          loginMutation.mutate(obj, {
-            onSuccess: (data) => {
-              localStorage.setItem('todo_token',data.token)
-              localStorage.setItem('isAdmin',data.isAdmin)
-              if (data.isAdmin!==true){
-                router.push('/tasks')
-              }
-              else{
-                router.push('/users')
-              }
-            },
-            onError: (error) => {
-                alert("Invalid Creds")
-            },
-        });
+        onSubmit={(event:FormEvent<HTMLFormElement>) => {
+          event.preventDefault();
+          loginAction(event)
         }}
       >
 

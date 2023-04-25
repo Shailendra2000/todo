@@ -18,7 +18,6 @@ function TaskItem (props:ITaskItemProps) {
       deleteTaskMutation.mutate({"id":Number(id)}, {
         onSuccess: (data) => {
           alert('task deleted!')
-          router.refresh()
         },
         onError: (error) => {
             alert("Bad Request")

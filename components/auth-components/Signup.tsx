@@ -2,29 +2,36 @@
 import { useMutation } from "@tanstack/react-query";
 import { SignupMutation } from "../../mutations/auth-mutations/SignupMutation";
 import { useRouter } from "next/navigation";
+import { FormEvent } from "react";
+import { getFormData } from "@/services/getFormData";
 const Signup = () => {
+
     const router = useRouter()
     const signupMutation = useMutation(SignupMutation);
+    const defaultSignupFormFeilds = ['username', 'email', 'password']
+    const defaultSucessMessage = 'Account created!, please login'
+    const defaultErrorMessage = 'Invalid Inputs!'
+    const defaultSucessRedirectUrl = 'auth/login'
+
+    const signupAction = ( formSubmitEvent : FormEvent<HTMLFormElement>, dataFeilds : string[] = defaultSignupFormFeilds, sucessMessage : string = defaultSucessMessage, sucessRedirectUrl : string = defaultSucessRedirectUrl, errorMessage : string = defaultErrorMessage ) => {
+        const signupData = getFormData( formSubmitEvent.currentTarget, dataFeilds )
+        signupMutation.mutate(signupData, {
+            onSuccess: (data : unknown) => {
+                alert(`${sucessMessage}`)
+                router.push(`${sucessRedirectUrl}`)
+            },
+            onError: (error) => {
+                alert(`${errorMessage}`)
+            },
+        });
+    }
+
     return (
       <form
           className="mb-10 flex flex-col items-center justify-center rounded-lg bg-gray-200 p-10 shadow-lg"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const obj = {
-              username: formData.get("username") ?? "",
-              email: formData.get("email") ?? "",
-              password: formData.get("password") ?? "",
-            };
-            signupMutation.mutate(obj, {
-                onSuccess: (data) => {
-                    alert("Account created!, please login")
-                    router.push('auth/login')
-                },
-                onError: (error) => {
-                    alert("Invalid Inputs")
-                },
-            });
+          onSubmit={(event:FormEvent<HTMLFormElement>) => {
+            event.preventDefault();
+            signupAction(event)
           }}
         >
         <label htmlFor="username">

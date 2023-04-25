@@ -4,35 +4,39 @@ import { CreateTaskMutation } from "../../mutations/task-mutations/CreateMutatio
 import { useRouter } from "next/navigation";
 import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList";
 import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
+import { FormEvent } from "react";
+import { getFormData } from "@/services/getFormData";
     
 interface ICreateTaskProps{
     buttonDisabled:boolean
 }
 const CreateTask = (props:ICreateTaskProps) => { 
+    
     const {statusList} = useTaskStatusList()
     const createTaskMutation = useMutation(CreateTaskMutation) 
     const router = useRouter()
+    const defaultTaskFormFeilds = [ 'title', 'desc', 'status']
+    const defaultSucessMessage = 'task created!'
+    const defaultErrorMessage = 'Bad Request!'
+    const createTaskAction = (formSubmitEvent : FormEvent<HTMLFormElement> , dataFeilds : string[] = defaultTaskFormFeilds, sucessMessage : string = defaultSucessMessage, errorMessage : string = defaultErrorMessage) => {
+        const data = getFormData(formSubmitEvent.currentTarget, dataFeilds)
+        createTaskMutation.mutate(data, {
+            onSuccess: (data) => {
+              alert(`${sucessMessage}`)
+              router.refresh()
+            },
+            onError: (error) => {
+                alert(`${errorMessage}`)
+            },
+        });
+    }
 
     return (
         <form
         className="flex gap-5 items-center justify-center rounded-lg bg-gray-200 px-10 py-5 shadow-lg"
         onSubmit={(e) => {
           e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          const obj = {
-            "title": formData.get("title") ?? "",
-            "desc": formData.get("desc") ?? "",
-            "status": formData.get("status") ?? ""
-          };
-          createTaskMutation.mutate(obj, {
-            onSuccess: (data) => {
-              alert('task created!')
-              router.refresh()
-            },
-            onError: (error) => {
-                alert("Bad Request")
-            },
-        });
+          createTaskAction(e)
         }}
         >
         <label htmlFor="title">
