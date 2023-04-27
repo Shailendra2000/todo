@@ -1,7 +1,7 @@
 'use client'
 
 import StatusList from "./StatusList"
-import { DragDropContext, DropResult } from "react-beautiful-dnd"
+import { DragDropContext, DraggableLocation, DropResult } from "react-beautiful-dnd"
 import CreateStatus from "./CreateStatus"
 import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList"
 import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface"
@@ -17,10 +17,14 @@ function StatusListContainer () {
       toList.splice(toIndex,0,item)
     }
 
+    const isPositionNotChanged = (destination:DraggableLocation,source:DraggableLocation) => {
+      return (destination.droppableId===source.droppableId && destination.index===source.index)
+    }
+
     const dropEnd = (result:DropResult)=>{
       const { source, destination } = result
       if (!destination) return
-      if (destination.droppableId===source.droppableId && destination.index===source.index) return
+      if (isPositionNotChanged(destination,source)) return
       
       moveStatusListItem(statusList,source.index,statusList,destination.index)
       

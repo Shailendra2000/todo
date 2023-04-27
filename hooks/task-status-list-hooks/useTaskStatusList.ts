@@ -1,52 +1,64 @@
-import { DeleteTaskStatusMutation } from "@/mutations/task-status-mutations/removeStatus"
-import { UpdateTaskStatusPriorityMutation } from "@/mutations/task-status-mutations/updatePriority"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface"
-import { fetchStatusList } from "@/services/fetchStatusList"
-
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
+import axiosInstance from "../../intercepters/defaultIntercepter";
+import { ITaskStatusPositionRequest } from "@/interfaces/task-status-interfaces/task-status.interfaces";
 export const useTaskStatusList = () => {
-    const updateTaskStatusMutation = useMutation(UpdateTaskStatusPriorityMutation) 
-    const router = useRouter()
-    const deleteStatusMutation = useMutation(DeleteTaskStatusMutation)
-    const result = useQuery(["statusList",localStorage.getItem("todo_token")],fetchStatusList)
-    const [statusList,setStatusList]=useState<ITaskStatus[]>([])
-  
-    useEffect(() => {
-        if (result.isError) {
-          router.push('/tasks')
-          router.refresh()
-        }
-        if (result.data) {
-          setStatusList(result.data);
-        }
-    },[result.data,result.isError]);
+  const router = useRouter();
+  const { isError, data } = useQuery(
+    ["statusList"],
+    async () =>
+      (await axiosInstance.get("http://localhost:9000/task-status")).data
+  );
 
-    const updateTaskStatusPriority = (statusId:number,priority:number) => {
-        const obj = {
-            "statusId": statusId,
-            "priority": priority
-          };
-          
-          updateTaskStatusMutation.mutate(obj, {
-            onSuccess: (data) => {
-                router.refresh()
-            },
-        });
-    }
-    function deleteStatus (statusId : number) {
-        let obj = { "statusId" : statusId }
-        deleteStatusMutation.mutate(obj, {
-            onSuccess: (data) => {
-              alert('status deleted!')
-              router.refresh()
-            },
-            onError: (error) => {
-                alert("Bad Request")
-            },
-        });
-    }
+  const [statusList, setStatusList] = useState<ITaskStatus[]>([]);
 
-    return {statusList,updateTaskStatusPriority,deleteStatus}
-}
+  useEffect(() => {
+    if (isError) {
+      router.push("/tasks");
+      router.refresh();
+    }
+    if (data) {
+      setStatusList([...data]);
+    }
+  }, [data, isError]);
+
+  const updateTaskStatusMutation = useMutation(
+    (param: ITaskStatusPositionRequest) =>
+      axiosInstance
+        .put("http://localhost:9000/task-status", param)
+        .then((res) => res.data)
+  );
+
+  const deleteStatusMution = useMutation(
+    (param: { statusId: number }) =>
+      axiosInstance
+        .delete(`http://localhost:9000/task-status?statusId=${param.statusId}`)
+        .then((res) => res.data),
+    {
+      onSuccess: (data) => {
+        alert("status deleted!");
+        router.refresh();
+      },
+      onError: (error) => {
+        alert("Bad Request");
+      },
+    }
+  );
+
+  const updateTaskStatusPriority = (statusId: number, priority: number) => {
+    const obj: ITaskStatusPositionRequest = {
+      statusId: statusId,
+      priority: priority,
+    };
+    updateTaskStatusMutation.mutate(obj);
+  };
+
+  function deleteStatus(statusId: number) {
+    let obj = { statusId: statusId };
+    deleteStatusMution.mutate(obj);
+  }
+
+  return { statusList, updateTaskStatusPriority, deleteStatus };
+};

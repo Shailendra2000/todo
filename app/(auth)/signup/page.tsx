@@ -14,13 +14,7 @@ function SignupPage(){
 
     return(
         <QueryClientProvider client={queryClient}>
-            <div className="grid h-screen place-items-center">
-                <div className="flex flex-col items-center">
-                <Signup/>
-                <h3>Already have account?</h3>
-                <Link className="text-blue-500" href="auth/login">Login</Link>
-            </div>
-        </div>
+          <Signup/>
         </QueryClientProvider>
     ) 
 }

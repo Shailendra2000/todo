@@ -1,8 +1,7 @@
 'use client'
 
-import { DeleteTaskMutation } from "@/mutations/task-mutations/DeleteMutaion"
+import axios from "@/intercepters/defaultIntercepter"
 import { useMutation } from "@tanstack/react-query"
-import { useRouter } from "next/navigation"
 import { Draggable } from "react-beautiful-dnd"
 
 interface ITaskItemProps{
@@ -12,18 +11,25 @@ interface ITaskItemProps{
 }
 function TaskItem (props:ITaskItemProps) {
 
-    const deleteTaskMutation = useMutation(DeleteTaskMutation) 
-    const router = useRouter()
-    const deleteTask = (id:string|number) => {
-      deleteTaskMutation.mutate({"id":Number(id)}, {
+    const deleteTaskMutation = useMutation(
+      (params : { id : number }) =>
+        axios
+          .delete(`http://localhost:9000/task?id=${params.id}`)
+          .then((res) => res.data),
+      {
         onSuccess: (data) => {
-          alert('task deleted!')
+          console.log('task deleted!');
         },
         onError: (error) => {
-            alert("Bad Request")
+          console.log(`Bad Request!`);
         },
-      })
+      }
+    );
+    
+    const deleteTask = (id:string|number) => {
+      deleteTaskMutation.mutate({"id":Number(id)})
     }
+
     return(
         <Draggable isDragDisabled={localStorage.getItem('isAdmin')==='true'} draggableId={props.id.toString()} index={props.index} key={props.id}>
         {
@@ -39,8 +45,6 @@ function TaskItem (props:ITaskItemProps) {
         }
         </Draggable>
     )
-
-    
 }
 
 export default TaskItem

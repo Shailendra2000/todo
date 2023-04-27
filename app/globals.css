@@ -10,7 +10,7 @@
 
 @layer components{
   .search-input{
-    @apply w-52 mb-5 block;
+    @apply w-52 block mb-5;
   }
 }
 @layer components{
