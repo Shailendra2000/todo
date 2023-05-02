@@ -1,24 +1,27 @@
 'use client'
 
 import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList";
-import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
 import { Draggable } from "react-beautiful-dnd"
 
 interface IStatusItemProps {
     id:number,
     index:number,
     title:string,
-    statusList:ITaskStatus[]
 }
 function StatusItem (props:IStatusItemProps) {
-    
     const { deleteStatus } = useTaskStatusList()
     
     const removeStatusFromList = ()=>{
         deleteStatus(props.id)
-        props.statusList.splice(props.index,1)
     }
-    
+    if (typeof window !== 'undefined') {
+        console.log('// Code is running on the client-side')
+        
+      } else {
+        console.log('// Code is running on the server-side')
+        
+      }
+      
     return (
         <Draggable draggableId={props.id.toString()} index={props.index} key={props.id}>
         {

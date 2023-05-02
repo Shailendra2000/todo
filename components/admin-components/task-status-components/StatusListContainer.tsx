@@ -1,45 +1,67 @@
-'use client'
+"use client";
+import StatusList from "./StatusList";
+import {
+  DragDropContext,
+  DraggableLocation,
+  DropResult,
+} from "react-beautiful-dnd";
+import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList";
+import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
+import { useDispatch } from "react-redux";
+import {
+  addStatus,
+  removeStatus,
+} from "@/redux/admin/statusList/statusListSlice";
+import { useEffect, useState } from "react";
 
-import StatusList from "./StatusList"
-import { DragDropContext, DraggableLocation, DropResult } from "react-beautiful-dnd"
-import CreateStatus from "./CreateStatus"
-import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusList"
-import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface"
+function StatusListContainer() {
+  const { statusList, updateTaskStatusPriority } = useTaskStatusList();
+  const dispatch = useDispatch();
 
-
-function StatusListContainer () {
-
-    const {statusList,updateTaskStatusPriority} = useTaskStatusList()
-
-    const moveStatusListItem = ( fromList: ITaskStatus[], fromIndex : number, toList : ITaskStatus[], toIndex : number ) => {
-      let item=fromList[fromIndex]
-      fromList.splice(fromIndex,1)
-      toList.splice(toIndex,0,item)
-    }
-
-    const isPositionNotChanged = (destination:DraggableLocation,source:DraggableLocation) => {
-      return (destination.droppableId===source.droppableId && destination.index===source.index)
-    }
-
-    const dropEnd = (result:DropResult)=>{
-      const { source, destination } = result
-      if (!destination) return
-      if (isPositionNotChanged(destination,source)) return
-      
-      moveStatusListItem(statusList,source.index,statusList,destination.index)
-      
-      statusList.map((status:any,index:number) => {
-        updateTaskStatusPriority(status.id,index)
-      });
+  const moveStatusListItem = (
+    fromList: ITaskStatus[],
+    fromIndex: number,
+    toIndex: number
+  ) => {
+    let item = fromList[fromIndex];
     
-    }
-
+    dispatch(removeStatus(fromIndex));
+    dispatch(addStatus({ index: toIndex, item: item }));
+  };
+  const isPositionNotChanged = (
+    destination: DraggableLocation,
+    source: DraggableLocation
+  ) => {
     return (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    );
+  };
+
+  const dropEnd = (result: DropResult) => {
+    const { source, destination } = result;
+    if (!destination) return;
+    if (isPositionNotChanged(destination, source)) return;
+
+    moveStatusListItem(statusList, source.index, destination.index);
+  };
+  useEffect(() => {
+    statusList.map((status: any, index: number) => {
+      updateTaskStatusPriority(status.id, index);
+    });
+  }, [statusList]);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  return isClient ? (
     <div className="flex flex-col items-center mt-5">
       <DragDropContext onDragEnd={dropEnd}>
-          <StatusList statusList={statusList}/>
+        <StatusList />
       </DragDropContext>
     </div>
-    )
+  ) : null;
 }
-export default StatusListContainer
+export default StatusListContainer;

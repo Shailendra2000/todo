@@ -1,26 +1,27 @@
 "use client";
-import { useQuery } from "@tanstack/react-query";
 import UserList from "./UserList";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import axios from "@/intercepters/defaultIntercepter";
+import { useDispatch } from "react-redux";
+import { useSelector } from "react-redux";
+import { setUsers } from "@/redux/admin/usersList/usersListSlice";
+import { useGetUsersListQuery } from "@/redux/todoApi";
 const AdminPageContainer = () => {
-  const { isError, data } = useQuery(
-    ["users"],
-    async () => (await axios.get("http://localhost:9000/users")).data
+  const { isError, data: users } = useGetUsersListQuery(
+    localStorage.getItem("todo_token")
   );
 
   const router = useRouter();
-  const [userList, setUserList] = useState([]);
-
+  const dispatch = useDispatch();
+  const userList = useSelector((state:any) => state.usersList.value);
   useEffect(() => {
     if (isError) {
       router.push("/tasks");
     }
-    if (data) {
-      setUserList(data.users);
+    if (users) {
+      dispatch(setUsers(users));
     }
-  }, [data, isError]);
+  }, [users, isError]);
 
   return (
     <div className="flex flex-col items-center gap-4">

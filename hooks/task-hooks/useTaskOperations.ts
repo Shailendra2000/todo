@@ -1,6 +1,5 @@
 import axiosInstance from "@/intercepters/defaultIntercepter";
-import { ITaskOperationsProps } from "@/interfaces/task-interfaces/task.interface";
-import { ITaskPositionData, ITaskRecord, ITaskStatusData } from "@/interfaces/task-interfaces/userTask.interfaces";
+import { ITaskPositionData, ITaskStatusData } from "@/interfaces/task-interfaces/userTask.interfaces";
 import { useMutation } from "@tanstack/react-query";
 
 export const useTaskOperations = () => {
@@ -9,7 +8,7 @@ export const useTaskOperations = () => {
     const updateTaskStatusMutation = useMutation(
         (params: ITaskStatusData) =>
           axiosInstance
-            .patch("http://localhost:9000/task", params)
+            .put("http://localhost:9000/task", {'id':params.taskId,'statusId':params.to_status})
             .then((res) => res.data),
         {
           onError: (error) => {
@@ -20,7 +19,7 @@ export const useTaskOperations = () => {
 
     const updateTaskPositionMutation = useMutation(
         (params: ITaskPositionData) =>
-          axiosInstance.patch("http://localhost:9000/task", params).then((res) => res.data),
+          axiosInstance.put("http://localhost:9000/task", {'id':params.taskId,'position':params.position}).then((res) => res.data),
         {
           onError: (error) => {
             console.log(`position not updated`);

@@ -1,71 +1,79 @@
 import { ITaskStatus } from "../../interfaces/task-interfaces/taskStatus.interface";
-import { useEffect, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
-import axiosInstance from "../../intercepters/defaultIntercepter";
-import { IFetchedTasks, ITaskPositionData, ITaskRecord, ITaskStatusData, IUseUserTaskProps } from "@/interfaces/task-interfaces/userTask.interfaces";
+import { useEffect } from "react";
+import {
+  IFetchedTasks,
+  ITaskRecord,
+  ITaskStatusData,
+  IUseUserTaskProps,
+} from "@/interfaces/task-interfaces/userTask.interfaces";
 import { useTaskOperations } from "./useTaskOperations";
+import { useSelector,useDispatch } from "react-redux";
+import { setAllTasks, setTasksByStatus, updateTasksByStatus } from "@/redux/task/tasksSlice";
+import { useGetTasksMutation } from "@/redux/todoApi";
 
-interface IUserTask{
+export interface IUserTask {
   [key: string]: ITaskRecord;
 }
 
 export const useUserTasks = (props: IUseUserTaskProps) => {
-
-  const [userTasks, setUserTasks] = useState<IUserTask>({});
-  const { updateTaskPosition,updateTaskStatusMutation } = useTaskOperations()
+  const userTasks : IUserTask = useSelector((state:any) => state.tasks.value);
+  const dispatch = useDispatch()
+  const [ getUserTasks ] = useGetTasksMutation()
+  const { updateTaskPosition, updateTaskStatusMutation } = useTaskOperations();
   const limit = 2;
   const getTaskUrl = "http://localhost:9000/task";
-  
+
   useEffect(() => {
-    setUserTasks({});
+    dispatch(setAllTasks({}));
     props.statusList.forEach(async (status: ITaskStatus) => {
       await getTasks(status.id);
     });
   }, [props.statusList]);
 
   const updateTaskStatus = (obj: ITaskStatusData) => {
-    const { from_status, to_status } = obj;
-    balanceTaskCount(to_status,from_status)
-    updateTaskStatusMutation.mutate(obj,
-      {
-        onSuccess: (data) => {
-          if (!areAllTasksFetched(from_status)) {
-            getTasks(
-              from_status,
-              userTasks[from_status].page * limit,
-              1,
-              0
-            );
-          }
-          if (isPaginationDisturbed(to_status)) {
-            userTasks[to_status].tasks.pop();
-          }
-        },
-        onError: () => {
-          balanceTaskCount(from_status,to_status)
+    let { from_status, to_status , tasks } = obj;
+    tasks = balanceTaskCount(tasks,to_status, from_status);
+    dispatch(setAllTasks(tasks))
+    updateTaskStatusMutation.mutate(obj, {
+      onSuccess: (data) => {
+        if (!areAllTasksFetched(tasks,from_status)) {
+          getTasks(from_status, tasks[from_status].page * limit, 1, 0,tasks);
         }
-      }
-      )
+        if (isPaginationDisturbed(tasks,to_status)) {
+          let tasksToDispatch = JSON.parse(JSON.stringify(tasks))
+          tasksToDispatch[to_status].tasks.pop();
+          dispatch(setAllTasks(tasksToDispatch))
+        }
+      },
+      onError: () => {
+        balanceTaskCount(tasks,from_status,to_status);
+      },
+    });
   };
 
-  const areAllTasksFetched = (statusId: number) => {
+  const areAllTasksFetched = (userTasks:IUserTask,statusId: number) => {
     return userTasks[statusId].total <= userTasks[statusId].tasks.length;
   };
-  const isPaginationDisturbed = (statusId: number) => {
-    return userTasks[statusId].page*limit < userTasks[statusId].tasks.length;
-  }
-  const balanceTaskCount = ( status_toincrease:number, status_todecrease:number) => {
-    userTasks[status_toincrease].total+=1
-    userTasks[status_todecrease].total-=1
-  }
+  const isPaginationDisturbed = (userTasks:IUserTask,statusId: number) => {
+    return userTasks[statusId].page * limit < userTasks[statusId].tasks.length;
+  };
+  const balanceTaskCount = (
+    userTasks:IUserTask,
+    addedToStatusId: number,
+    removedFromStatusId: number
+  ) => {
+    userTasks[addedToStatusId].total += 1;
+    userTasks[removedFromStatusId].total -= 1;
+    return userTasks
+  };
 
   const addTasks = (tasks: IFetchedTasks) => {
-    let obj_status: ITaskRecord = {
+    let obj: ITaskRecord = {
       tasks: tasks.tasks,
       page: 1,
       total: tasks.total,
     };
-    return obj_status;
+    return obj;
   };
 
   const appendTasks = (
@@ -74,10 +82,12 @@ export const useUserTasks = (props: IUseUserTaskProps) => {
     tasks: IFetchedTasks,
     page_increment_after_fetching: number
   ) => {
-    tasksClone[statusId].tasks = tasksClone[statusId].tasks.concat(tasks.tasks);
-    tasksClone[statusId].page += page_increment_after_fetching;
-    tasksClone[statusId].total = tasks.total;
-    return tasksClone;
+    let obj: ITaskRecord = {
+      tasks: tasksClone[statusId].tasks.concat(tasks.tasks),
+      page: tasksClone[statusId].page+page_increment_after_fetching,
+      total: tasks.total,
+    };
+    return obj;
   };
 
   const generateFetchTaskUrl = (
@@ -98,7 +108,8 @@ export const useUserTasks = (props: IUseUserTaskProps) => {
     statusId: number,
     page: number = 1,
     page_limit: number = limit,
-    page_increment_after_fetching = 1
+    page_increment_after_fetching = 1,
+    userTasksRef : IUserTask = userTasks
   ) => {
     const searchParams = new URLSearchParams(window.location.search);
     const userId = searchParams.get("userId");
@@ -109,25 +120,20 @@ export const useUserTasks = (props: IUseUserTaskProps) => {
       page_limit,
       userId
     );
-    const tasks: IFetchedTasks = await axiosInstance.get(url).then((res) => res.data);
-
-    let userTasksClone = userTasks;
-    if (statusId in userTasksClone) {
-      userTasksClone = appendTasks(
-        userTasksClone,
-        statusId,
-        tasks,
-        page_increment_after_fetching
-      );
+    const data = await getUserTasks(url) as any
+    const tasks = data.data
+    if (statusId in userTasks) {
+      let taskObj = appendTasks(userTasksRef,statusId,tasks,page_increment_after_fetching)
+      dispatch(updateTasksByStatus({'status':statusId,'tasks':taskObj}))
     } else {
-      userTasksClone[statusId] = addTasks(tasks);
+      let taskObj = addTasks(tasks);
+      dispatch(setTasksByStatus({'status':statusId,'tasks':taskObj}))
     }
-    setUserTasks({ ...userTasks, ...userTasksClone });
   };
 
   return {
     userTasks,
-    setUserTasks,
+
     getTasks,
     updateTaskStatus,
     updateTaskPosition,

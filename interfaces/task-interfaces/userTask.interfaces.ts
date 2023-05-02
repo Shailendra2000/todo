@@ -1,3 +1,4 @@
+import { IUserTask } from "@/hooks/task-hooks/useUserTasks";
 import { ITask } from "./task.interface";
 import { ITaskStatus } from "./taskStatus.interface";
 
@@ -21,6 +22,7 @@ export interface IUseUserTaskProps {
     position: number;
   }
   export interface ITaskStatusData {
+    tasks:IUserTask,
     taskId: number;
     to_status: number;
     from_status: number;

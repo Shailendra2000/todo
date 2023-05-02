@@ -4,7 +4,7 @@ import { useTaskStatusList } from "@/hooks/task-status-list-hooks/useTaskStatusL
 import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
 import { FormEvent } from "react";
 import { getFormData } from "@/utils/getFormData";
-import axiosInstance from "axios";
+import axiosInstance from "../../intercepters/defaultIntercepter";
 
 interface ICreateTaskProps {
   buttonDisabled: boolean;
@@ -13,12 +13,12 @@ interface ICreateTaskProps {
 interface ITaskCreateData {
   title: string;
   desc: string;
-  status: string;
+  statusId: number;
 }
 
 const CreateTask = (props: ICreateTaskProps) => {
   const { statusList } = useTaskStatusList();
-  const defaultTaskFormFeilds = ["title", "desc", "status"];
+  const defaultTaskFormFeilds = ["title", "desc", "statusId"];
   const defaultSucessMessage = "task created!";
   const defaultErrorMessage = "Bad Request!";
 
@@ -77,9 +77,9 @@ const CreateTask = (props: ICreateTaskProps) => {
           required
         />
       </label>
-      <label htmlFor="status">
+      <label htmlFor="statusId">
         Status
-        <select className="search-input" name="status">
+        <select className="search-input" name="statusId">
           {statusList.map((status: ITaskStatus) => (
             <option value={status.id} key={status.status}>
               {status.status}

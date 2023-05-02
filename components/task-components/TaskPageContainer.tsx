@@ -1,25 +1,21 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
 import { DragDropContext, DropResult } from "react-beautiful-dnd";
 import CreateTask from "../../components/task-components/CreateTask";
-import { useQuery } from "@tanstack/react-query";
 import TaskContainer from "../../components/task-components/TaskContainer";
-import { useRouter } from "next/navigation";
 import AdminTaskPageHeader from "./AdminHeader";
-import { useUserTasks } from "@/hooks/task-hooks/useUserTasks";
+import { IUserTask, useUserTasks } from "@/hooks/task-hooks/useUserTasks";
 import { ITaskStatus } from "@/interfaces/task-interfaces/taskStatus.interface";
 import { ITask } from "@/interfaces/task-interfaces/task.interface";
-import axiosInstance from "../../intercepters/defaultIntercepter";
 import PaginationButton from "./PaginationButton";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { setAllTasks } from "@/redux/task/tasksSlice";
 
 const TaskPageContainer = () => {
   let searchParams = new URLSearchParams(window.location.search);
-  const { isError, data } = useQuery(
-    ["statusList"],
-    async () => (await axiosInstance.get("http://localhost:9000/task-status")).data
-  );
+  const taskStatusList = useSelector((state:any) => state.statusList.value);
+  const dispatch = useDispatch();
 
-  const [taskStatusList, setTaskStatusList] = useState<ITaskStatus[]>([]);
   const {
     userTasks,
     getTasks,
@@ -27,34 +23,25 @@ const TaskPageContainer = () => {
     updateTaskPosition,
     areAllTasksFetched,
   } = useUserTasks({ statusList: taskStatusList });
-  const router = useRouter();
 
-  useEffect(() => {
-    if (isError) {
-      router.push("/login");
-    }
-    if (data) {
-      setTaskStatusList([...data]);
-    }
-  }, [data, isError]);
-
-  const updatePosition = (list: ITask[]) => {
-    list.map((task: ITask, index: number) => {
+  const updatePosition = (userTasks: IUserTask, statusId: string) => {
+    userTasks[statusId].tasks.forEach((task: ITask, index: number) => {
       updateTaskPosition(task.id, index);
     });
   };
 
   const moveListItem = (
-    fromList: ITask[],
+    userTasks: IUserTask,
+    fromStatusId: string,
+    toStatusId: string,
     fromIndex: number,
-    toList: ITask[],
     toIndex: number
   ) => {
-    let item = fromList[fromIndex];
-    fromList.splice(fromIndex, 1);
-    toList.splice(toIndex, 0, item);
+    let item = userTasks[fromStatusId].tasks[fromIndex];
+    userTasks[fromStatusId].tasks.splice(fromIndex, 1);
+    userTasks[toStatusId].tasks.splice(toIndex, 0, item);
+    return userTasks;
   };
-
 
   const dropEnd = (result: DropResult) => {
     const { source, destination } = result;
@@ -65,27 +52,29 @@ const TaskPageContainer = () => {
     const from_index = source.index;
     const to_index = destination.index;
     const draggedTaskId = result.draggableId;
-    const fromTaskList = userTasks[from_statusId].tasks;
-    const toTaskList = userTasks[to_statusId].tasks;
 
     if (to_statusId === from_statusId && to_index === from_index) return;
 
-    moveListItem(
-      fromTaskList,
+    const cloneUserTasks : IUserTask = JSON.parse(JSON.stringify(userTasks));
+    const newUserTasks = moveListItem(
+      cloneUserTasks,
+      from_statusId,
+      to_statusId,
       from_index,
-      toTaskList,
       to_index
     );
-
     if (from_statusId !== to_statusId) {
       updateTaskStatus({
+        tasks: newUserTasks,
         taskId: Number(draggedTaskId),
         to_status: Number(to_statusId),
         from_status: Number(from_statusId),
       });
-      updatePosition(fromTaskList);
+      updatePosition(newUserTasks, from_statusId);
     }
-    updatePosition(toTaskList);
+    updatePosition(newUserTasks, to_statusId);
+    dispatch(setAllTasks(newUserTasks));
+    
   };
 
   return (
@@ -99,27 +88,27 @@ const TaskPageContainer = () => {
           />
         </div>
         <div className="grid grid-flow-col-dense gap-4">
-          {taskStatusList.map((element: ITaskStatus) => {
-            return (
-              <div className="flex flex-col items-center bg-slate-100 p-5 rounded-lg">
-                <TaskContainer
-                  tasks={
-                    userTasks[element.id] ? userTasks[element.id].tasks : []
-                  }
-                  status={element.status}
-                  id={element.id}
-                  key={element.id}
-                />
-                {userTasks[element.id] && !areAllTasksFetched(element.id) && (
-                  <PaginationButton
-                    id={element.id}
-                    userTasks={userTasks}
-                    fetchUserTasks={getTasks}
-                  />
-                )}
-              </div>
-            );
-          })}
+          {taskStatusList
+            ? taskStatusList.map((element: ITaskStatus) => {
+                return (
+                  <div className="flex flex-col items-center bg-slate-100 p-5 rounded-lg">
+                    <TaskContainer
+                      status={element.status}
+                      id={element.id}
+                      key={element.id}
+                    />
+                    {userTasks[element.id] &&
+                      !areAllTasksFetched(userTasks, element.id) && (
+                        <PaginationButton
+                          id={element.id}
+                          userTasks={userTasks}
+                          fetchUserTasks={getTasks}
+                        />
+                      )}
+                  </div>
+                );
+              })
+            : null}
         </div>
       </div>
     </DragDropContext>
